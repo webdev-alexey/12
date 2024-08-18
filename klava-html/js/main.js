@@ -7,32 +7,80 @@ const lines = getLines(text);
 
 let letterId = 1;
 
-update();
+init();
 
-inputElement.addEventListener("keydown", function (event) {
-  const currentLetter = getCurrentLetter();
+function init() {
+  update();
 
-  if (event.key === currentLetter.label) {
-    letterId = letterId + 1;
-    update();
-  }
-});
+  inputElement.focus();
+
+  inputElement.addEventListener("keydown", function (event) {
+    const currentLineNumber = getCurrentLineNumber();
+    const element = document.querySelector(
+      '[data-key="' + event.key.toLowerCase() + '"]'
+    );
+    const currentLetter = getCurrentLetter();
+
+    if (event.key.startsWith("F") && event.key.length > 1) {
+      return;
+    }
+
+    if (element) {
+      element.classList.add("hint");
+    }
+
+    const isKey = event.key === currentLetter.original;
+    const isEnter = event.key === "Enter" && currentLetter.original === "\n";
+
+    if (isKey || isEnter) {
+      letterId = letterId + 1;
+      update();
+    } else {
+      event.preventDefault();
+    }
+
+    if (currentLineNumber !== getCurrentLineNumber()) {
+      inputElement.value = "";
+      event.preventDefault();
+    }
+  });
+
+  inputElement.addEventListener("keyup", function (event) {
+    const element = document.querySelector(
+      '[data-key="' + event.key.toLowerCase() + '"]'
+    );
+    if (element) {
+      element.classList.remove("hint");
+    }
+  });
+}
 
 function getLines(text) {
   const lines = [];
 
   let line = [];
   let idCounter = 0;
-  for (const letter of text) {
+  for (const originalLetter of text) {
     idCounter = idCounter + 1;
+
+    let letter = originalLetter;
+
+    if (letter === " ") {
+      letter = "°";
+    }
+
+    if (letter === "\n") {
+      letter = "¶\n";
+    }
 
     line.push({
       id: idCounter,
       label: letter,
+      original: originalLetter,
       success: true,
     });
 
-    if (line.length >= 70 || letter === "\n") {
+    if (line.length >= 70 || letter === "¶\n") {
       lines.push(line);
       line = [];
     }
