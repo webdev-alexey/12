@@ -6,6 +6,11 @@ const textExampleElement = document.querySelector("#textExample");
 const lines = getLines(text);
 
 let letterId = 1;
+let startMoment = null;
+let started = false;
+
+let letterCounter = 0;
+let letterCounterError = 0;
 
 init();
 
@@ -20,6 +25,15 @@ function init() {
       '[data-key="' + event.key.toLowerCase() + '"]'
     );
     const currentLetter = getCurrentLetter();
+
+    if (event.key !== "Shift") {
+      letterCounter = letterCounter + 1;
+    }
+
+    if (!started) {
+      started = true;
+      startMoment = Date.now();
+    }
 
     if (event.key.startsWith("F") && event.key.length > 1) {
       return;
@@ -37,11 +51,36 @@ function init() {
       update();
     } else {
       event.preventDefault();
+
+      if (event.key !== "Shift") {
+        letterCounterError = letterCounterError + 1;
+
+        for (const line of lines) {
+          for (const letter of line) {
+            if (letter.original === currentLetter.original) {
+              letter.success = false;
+            }
+          }
+        }
+
+        update();
+      }
     }
 
     if (currentLineNumber !== getCurrentLineNumber()) {
       inputElement.value = "";
       event.preventDefault();
+
+      const time = Date.now() - startMoment;
+      document.querySelector("#wordsSpeed").textContent = Math.round(
+        (60000 * letterCounter) / time
+      );
+      document.querySelector("#errorProcent").textContent =
+        Math.floor((10000 * letterCounterError) / letterCounter) / 100 + "%";
+
+      started = false;
+      letterCounter = 0;
+      letterCounterError = 0;
     }
   });
 
@@ -105,6 +144,8 @@ function lineToHtml(line) {
 
     if (letterId > letter.id) {
       spanElement.classList.add("done");
+    } else if (!letter.success) {
+      spanElement.classList.add("hint");
     }
   }
 
